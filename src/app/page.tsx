@@ -20,23 +20,40 @@ export default function Home() {
   const getPokemonInfo = async (pokemon: IPokemonList) => {
     const { name, url } = pokemon;
     const localPokemon = window.localStorage.getItem(name);
+    let pokemonData;
     if (localPokemon) {
-      setPokemon(JSON.parse(localPokemon));
-      console.log("local");
-      return;
+      pokemonData = JSON.parse(localPokemon);
+    } else {
+      let data = await fetch(url);
+      pokemonData = await data.json();
+      if (pokemon)
+        window.localStorage.setItem(name, JSON.stringify(pokemonData));
     }
-    let data = await fetch(url);
-    const pokemonData = await data.json();
     setPokemon(pokemonData);
-    if (pokemon) window.localStorage.setItem(name, JSON.stringify(pokemonData));
+  };
+
+  const showRandomPokemon = () => {
+    const randomPokemon = pokemons[Math.floor(Math.random() * pokemons.length)];
+    getPokemonInfo(randomPokemon);
   };
 
   useEffect(() => {
     async function fetchData() {
-      let data = await fetch(
-        "https://pokeapi.co/api/v2/pokemon?limit=700&offset=0"
-      );
-      let pokemons = await data.json();
+      const localPokemons = window.localStorage.getItem("localPokemons");
+      let pokemons;
+      if (localPokemons) {
+        pokemons = JSON.parse(localPokemons);
+      } else {
+        let data = await fetch(
+          "https://pokeapi.co/api/v2/pokemon?limit=1400&offset=0"
+        );
+        pokemons = await data.json();
+        if (pokemons)
+          window.localStorage.setItem(
+            "localPokemons",
+            JSON.stringify(pokemons)
+          );
+      }
       setPokemons(pokemons.results);
       setVisiblePokemons(pokemons.results);
     }
@@ -72,6 +89,14 @@ export default function Home() {
         </div>
       </nav>
       <main className="w-full mx-auto">
+        <div className="w-full flex align-center justify-center">
+          <button
+            className="text-4xl font-bold bg-white text-black py-2 px-4 rounded-md my-10"
+            onClick={showRandomPokemon}
+          >
+            MAGIC BUTTON!
+          </button>
+        </div>
         {pokemon && (
           <div className="w-full grid grid-cols-6">
             <img
@@ -83,9 +108,9 @@ export default function Home() {
                 <dt className="font-extrabold">Name</dt>
                 <dd>{pokemon.name}</dd>
                 <dt className="font-extrabold mt-4">Height</dt>
-                <dd>{pokemon.height * 100} g</dd>
+                <dd>{pokemon.height * 0.1} m</dd>
                 <dt className="font-extrabold mt-4">Weight</dt>
-                <dd>{pokemon.weight / 10} m</dd>
+                <dd>{pokemon.weight * 0.1} kg</dd>
                 <dt className="font-extrabold mt-4">Showdown</dt>
                 <dd>
                   <img src={pokemon?.sprites?.other.showdown.front_default} />
